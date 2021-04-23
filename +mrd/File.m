@@ -5,15 +5,15 @@ classdef File < handle & matlab.mixin.CustomDisplay
         mode string
     end
 
-    properties (GetAccess=private, SetAccess=immutable, Transient, Hidden)
+    properties (GetAccess=public, SetAccess=immutable, Transient, Hidden)
         fid
     end
         
     methods
         function self = File(path, mode)
             arguments
-               path {mustBeNonzeroLengthText}
-               mode {mustBeMember(mode, ["read-only", "read-write"])} = "read-only"
+               path (1, 1) string {mustBeTextScalar, mustBeNonzeroLengthText}
+               mode (1, 1) string {mustBeMember(mode, ["read-only", "read-write"])} = "read-only"
             end
 
             self.path = path;
@@ -27,7 +27,7 @@ classdef File < handle & matlab.mixin.CustomDisplay
             self.fid = H5F.open(path, self.fileModes(mode), 'H5P_DEFAULT');
         end
         
-        function delete(self)
+        function delete(self)           
             H5F.close(self.fid);
         end        
         
@@ -38,8 +38,8 @@ classdef File < handle & matlab.mixin.CustomDisplay
                     % implementation.
                     [varargout{1:nargout}] = builtin('subsref', self, S);
                 case '()'
-                    % Call open for each of the groups supplied.
-                    [varargout{1:nargout}] = cellfun(@self.open, S.subs);
+                    % Call read for each of the groups supplied.
+                    [varargout{1:nargout}] = cellfun(@self.read, S.subs);
                 case '{}'
                     exceptionId = "MATLAB:cellRefFromNonCell";
                     exceptionMessage = "Brace indexing is not supported for variables of this type.";
@@ -52,16 +52,22 @@ classdef File < handle & matlab.mixin.CustomDisplay
         function dataset = read(self, groupname)
             arguments
                 self
-                groupname {mustBeNonzeroLengthText}                
+                groupname {mustBeTextScalar, mustBeNonzeroLengthText}                
             end
            
             if self.pathIsValidDataset(groupname)
-                dataset = mrd.Dataset(header, acquisitions);
+                source = mrd.details.FileSource(self, groupname);
+                
+                dataset = mrd.Dataset( ...
+                    mrd.serialization.xml.deserialize(source.getString("/xml")), ...
+                    source.getAcquisitions("/data") ...
+                );
+            
                 return
             end
             
             if self.pathIsValidImageset(groupname)
-                dataset = mrd.Imageset(images);                
+                dataset = mrd.details.FileImageset(mrd.details.FileSource(self, groupname));
                 return
             end
             
@@ -73,10 +79,10 @@ classdef File < handle & matlab.mixin.CustomDisplay
         function write(self, groupname, dataset)
             arguments
                 self
-                groupname {mustBeNonzeroLengthText}
+                groupname {mustBeTextScalar, mustBeNonzeroLengthText}
                 dataset {mustBeA(dataset, "mrd.Dataset", "mrd.Imageset")}
             end
-            
+           
             disp("Write: " + groupname);            
             disp(dataset);            
         end
@@ -96,7 +102,8 @@ classdef File < handle & matlab.mixin.CustomDisplay
             arguments
                 self
             end
-                        
+            
+            keySet = arrayfun(@convertStringsToChars, self.listValidGroups(), 'UniformOutput', false);
         end
         
         function valueSet = values(self, keySet)
@@ -105,11 +112,10 @@ classdef File < handle & matlab.mixin.CustomDisplay
                 keySet
             end
             
-            
+            % TODO: Something. 
         end
     end
-    
-    
+        
     methods (Access=private)
 
         function groups = listValidGroups(self)
@@ -117,7 +123,7 @@ classdef File < handle & matlab.mixin.CustomDisplay
             function [status, opdata] = iter_func(~, groupname, opdata)
                 
                 if self.pathIsValidDataset(groupname) || self.pathIsValidImageset(groupname)
-                    opdata = [opdata; string(groupname)];
+                    opdata = [opdata, string(groupname)];
                 end
                 
                 status = 0;
@@ -136,6 +142,7 @@ classdef File < handle & matlab.mixin.CustomDisplay
         function tf = pathIsValidDataset(self, path)
             
             tf = ...
+                self.pathExists(path) && ...
                 self.pathHasType(path, 'H5G_GROUP') && ...
                 self.pathHasChild(path, "/xml") && ...
                 self.pathHasType(path + "/xml", 'H5G_DATASET') && ...
@@ -147,6 +154,7 @@ classdef File < handle & matlab.mixin.CustomDisplay
         function tf = pathIsValidImageset(self, path)
             
             tf = ...
+                self.pathExists(path) && ...
                 self.pathHasType(path, 'H5G_GROUP') && ...
                 self.pathHasChild(path, "/header") && ...
                 self.pathHasType(path + "/header", 'H5G_DATASET') && ...
@@ -156,6 +164,10 @@ classdef File < handle & matlab.mixin.CustomDisplay
                 self.pathHasType(path + "/attributes", 'H5G_DATASET') && ...
                ~self.pathHasChild(path, "/xml") && ...
                ~self.pathHasChild(path, "/waveforms");             
+        end
+        
+        function tf = pathExists(self, path)
+            tf = H5L.exists(self.fid, path, 'H5P_DEFAULT');            
         end
         
         function tf = pathHasType(self, path, type)
@@ -186,6 +198,17 @@ classdef File < handle & matlab.mixin.CustomDisplay
             
             H5G.close(group_id);            
         end
+    end
+    
+    methods (Access = protected)
+        % These methods plug into the CustomDisplay mixin. They govern how
+        % Files are displayed.
+    end
+    
+    methods 
+       
+        
+        
     end
     
     properties (GetAccess=private, Constant)

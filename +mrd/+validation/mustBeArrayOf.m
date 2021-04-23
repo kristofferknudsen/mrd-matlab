@@ -1,6 +1,6 @@
 function mustBeArrayOf(input, type)
     if isa(input, type), return; end   
-    if isa(input, 'mrd.util.ArrayLike') && input.ValueType == meta.class.fromName(type), return; end
+    if isprop(input, 'valueType') && input.valueType == meta.class.fromName(type), return; end
     
     exceptionId = 'mrd:validation:wrongArrayType';
     exceptionMessage = ['Must be array (or array-like object) of type: ', type];    

@@ -1,22 +1,16 @@
 classdef Imageset
-    %IMAGESET Summary of this class goes here
-    %   Detailed explanation goes here
     
     properties
-        Property1
+        Images (1, :) {mustBeArrayOf(Images, 'mrd.Image')} = mrd.Image.empty(1, 0);
     end
     
     methods
-        function obj = Imageset(inputArg1,inputArg2)
-            %IMAGESET Construct an instance of this class
-            %   Detailed explanation goes here
-            obj.Property1 = inputArg1 + inputArg2;
-        end
-        
-        function outputArg = method1(obj,inputArg)
-            %METHOD1 Summary of this method goes here
-            %   Detailed explanation goes here
-            outputArg = obj.Property1 + inputArg;
+        function self = Imageset(images)
+            arguments
+                images (1, :) {mustBeArrayOf(images, 'mrd.Image')} = mrd.Image.empty(1, 0)
+            end
+            
+            self.Images = images;
         end
     end
 end
