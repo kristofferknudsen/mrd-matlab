@@ -9,8 +9,12 @@ classdef DatasetTest < matlab.unittest.TestCase
             self.verifyInstanceOf(dataset, ?mrd.Dataset);
         end
 
-        
-        
+        function testReadingImagesetFromFile(self)
+            file = mrd.File("res/images.mrd");
+            imageset = file("inverted/images_0");
+            
+            self.verifyInstanceOf(iamgeset, ?mrd.Imageset);
+        end
     end
 end
 

@@ -10,7 +10,7 @@ classdef Acquisition
         function self = Acquisition(header, data, trajectory)
             arguments
                 header (1, 1) mrd.AcquisitionHeader
-                data single
+                data single = []
                 trajectory single = []
             end
             

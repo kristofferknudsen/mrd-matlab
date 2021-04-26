@@ -45,7 +45,54 @@ classdef AcquisitionHeader
         user_int                (1, 8) int32;
         user_float              (1, 8) single;
     end
-   
+
+%     properties
+%         version                 ;
+%         
+%         flags                   ;
+%         
+%         measurement_uid         ;
+%         scan_counter            ;
+%         
+%         acquisition_time_stamp  ;
+%         physiology_time_stamp   ;
+% 
+%         number_of_samples       ;
+%         available_channels      ;
+%         active_channels         ;
+%         
+%         channel_mask            ;
+%         
+%         discard_pre             ;
+%         discard_post            ;
+%         center_sample           ;
+%         encoding_space_ref      ;
+%         trajectory_dimensions   ;
+%         
+%         sample_time_us          ;
+%         
+%         position                ;
+%         read_dir                ;
+%         phase_dir               ;
+%         slice_dir               ;
+%         patient_table_position  ;
+%                 
+%         kspace_encode_step_1    ;
+%         kspace_encode_step_2    ;        
+%         average                 ;
+%         slice                   ;
+%         contrast                ;
+%         phase                   ;
+%         repetition              ;
+%         set                     ;
+%         segment                 ;
+%         user                    ;
+%         
+%         user_int                ;
+%         user_float              ;
+%     end
+
+
     methods
         
         function self = update(self, source)

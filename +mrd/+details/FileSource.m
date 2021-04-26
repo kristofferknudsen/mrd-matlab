@@ -88,6 +88,8 @@ end
 
 function acquisitions = prepareAcquisitions(raw)
 
+    profile on;
+
     count = numel(raw.head.version);
 
     function headers = splitHeaders(raw)
@@ -109,15 +111,21 @@ function acquisitions = prepareAcquisitions(raw)
         end
         
         for i = 1:count
-            headers{i} = mrd.AcquisitionHeader.fromStruct(takeSlice(raw, i));
+            headers{i} = mrd.AcquisitionHeader();
+            headers{i} = headers{i}.update(takeSlice(raw, i));
             headers{i} = headers{i}.update(takeSlice(idx, i));
         end
     end
 
-
     headers = splitHeaders(raw.head);
 
-    acquisitions = arrayfun(@(i) prepareAcquisition(headers{i}, raw.data{i}, raw.traj{i}), 1:count);
+    for j = 1:count
+        acquisitions(j) = prepareAcquisition(headers{j}, raw.data{j}, raw.traj{j});
+    end
+    
+    
+    profile off;
+    profile viewer;
 end
 
 function acquisition = prepareAcquisition(header, data, traj)
